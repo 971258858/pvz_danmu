@@ -8,11 +8,13 @@ For community support, please contact me on Discord: DougTheDruid#2784
 import pygame
 from pvz_hack import PVZMemoryReader
 from pygame_helper import PyGameHelper, fuchsia
-
+import win32api
 DEBUG = False
 COLOR = (255,255,0)
+GetAsyncKeyState = win32api.GetAsyncKeyState
 
 if __name__ == '__main__':
+    print("F1减速僵尸20秒 F2自动拾取阳光 F6修改阳光2000 F7无限阳光")
     # Initialize our SoT Hack object, and do a first run of reading actors
     # 初始化我们的SoT Hack对象，并进行第一次读取
     smr = PVZMemoryReader()
@@ -25,7 +27,6 @@ if __name__ == '__main__':
     # 我们只想在没有在Debug中运行的情况下生成PyGame资源模式（否则调试时会出现黑屏）
     if not DEBUG:
         pgh = PyGameHelper()
-
 
     # 缩放比例
     proportion_x = (pgh.windows_area[2] - pgh.windows_area[0]) / 785
@@ -41,6 +42,23 @@ if __name__ == '__main__':
                     done = True
 
         if not DEBUG:
+
+            if (GetAsyncKeyState(0x75) & 0x8000):  # 'F6' key
+                # 修改阳光:
+                smr.set_mysun(2000)
+
+            if (GetAsyncKeyState(0x76) & 0x8000):  # 'F7' key
+                # 无限阳光:
+                smr.change_memory()
+
+            if (GetAsyncKeyState(0x70) & 0x8000):  # 'F1' key
+                # 减速场上僵尸:
+                smr.change_state(2000)
+
+            if (GetAsyncKeyState(0x71) & 0x8000):  # 'F2' key
+                #自动拾取阳光
+                smr.auto_pickup()
+
             # Fill the screen with the transparent color we set in PyGameHelper
             # 用我们在PyGameHelper中设置的透明颜色填充屏幕
             pgh.screen.fill(fuchsia)

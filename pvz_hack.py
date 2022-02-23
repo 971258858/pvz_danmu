@@ -4,7 +4,6 @@
 For community support, please contact me on Discord: DougTheDruid#2784
 """
 
-
 from memory_helper import ReadMemory
 
 class PVZMemoryReader:
@@ -23,6 +22,11 @@ class PVZMemoryReader:
 
     def read_ZombieList(self):
         self.run_info = []
+
+        # 本局阳光
+        self.sun = self.rm.read_int(self.offset2 + 21856)
+        # print("阳光数：", self.sun)
+
         # 本局僵尸总数
         self.zombie_num = self.rm.read_int(self.offset2 + 148)
         self.zombie_now_num = self.rm.read_int(self.offset2 + 160)
@@ -33,6 +37,7 @@ class PVZMemoryReader:
             zombie_entity = self.rm.read_ulong(self.offset2 + 144) + 348 * index
             # print("zombie_entity", zombie_entity)
             zombie_attribute = {
+                '怪物基址': zombie_entity,
                 '怪物大小': self.rm.read_float(zombie_entity + 284),  # 初始1
                 '神秘消失': self.rm.read_ulong(zombie_entity + 236),
                 '血量上限': self.rm.read_ulong(zombie_entity + 204),
@@ -50,3 +55,21 @@ class PVZMemoryReader:
             # print(zombie_attribute)
             self.run_info.append(zombie_attribute)
         # print(self.run_info)
+
+    def set_mysun(self, changenum: int):
+        if self.sun != 6646952:
+            self.rm.set_int(self.offset2 + 21856, changenum)
+            print("阳光修改2000成功！")
+
+    def change_memory(self):
+        self.rm.set_bytes(self.rm.base_address + 0x1BA76, 1, 1)
+        print("无限阳光修改成功！")
+
+    def change_state(self, changenum: int):
+        for zombie in self.run_info:
+            self.rm.set_int(zombie.get('怪物基址') + 172, changenum)
+        print("减速20秒成功！")
+
+    def auto_pickup(self):
+        self.rm.set_bytes(self.rm.base_address + 0x3158F, 1, 235)
+        print("自动拾取修改成功！")

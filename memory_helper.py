@@ -9,7 +9,7 @@ import ctypes
 import ctypes.wintypes
 import struct
 import psutil
-
+import win32api
 
 MAX_PATH = 260
 MAX_MODULE_NAME32 = 255
@@ -84,7 +84,8 @@ class ReadMemory:
         :param exe_name:要从其中读取内存的程序的可执行名称
         """
         self.exe = exe_name
-        self.pid = self._get_process_id()
+        self.pid = self._get_process_id().pid
+        self.patch = self._get_process_id().cwd()
         self.handle = self._get_process_handle()
         self.base_address = self._get_base_address()
         # 游戏基址
@@ -97,7 +98,7 @@ class ReadMemory:
         # 正在运行的进程列表psutil.process_iter()
         for proc in psutil.process_iter():
             if self.exe in proc.name():
-                return proc.pid
+                return proc
         raise Exception(f"Cannot find executable with name: {self.exe}")
 
     def _get_process_handle(self):
@@ -235,3 +236,43 @@ class ReadMemory:
         i = buff.find(b"\x00\x00\x00")
         joined = str("".join(map(chr, buff[:i])))
         return ''.join(char for char in joined if char in printable)
+
+    def set_int(self, address: int, num: int):
+        """
+        :修改整数型数值
+        """
+        PROCESS_ALL_ACCESS = (0x000F0000 | 0x00100000 | 0xFFF)
+        # 找窗体
+
+        # 以最高权限打开进程
+        p = win32api.OpenProcess(PROCESS_ALL_ACCESS, False, self.pid)
+        # 加载内核模块
+        md = ctypes.windll.LoadLibrary("C:\\Windows\\System32\\kernel32")
+        data = ctypes.c_long()
+        # 读取内存
+        md.ReadProcessMemory(int(p), address, ctypes.byref(data), 4, None)
+        # 新值
+        newData = ctypes.c_long(num)
+        # 修改
+        md.WriteProcessMemory(int(p), address, ctypes.byref(newData), 4, None)
+        win32api.CloseHandle(p)
+
+    def set_bytes(self, address: int, byte: int, change: int) -> bytes:
+        """
+        :修改十六进制型数值
+        """
+        PROCESS_ALL_ACCESS = (0x000F0000 | 0x00100000 | 0xFFF)
+        # 找窗体
+
+        # 以最高权限打开进程
+        p = win32api.OpenProcess(PROCESS_ALL_ACCESS, False, self.pid)
+        # 加载内核模块
+        md = ctypes.windll.LoadLibrary("C:\\Windows\\System32\\kernel32")
+        data = ctypes.c_size_t()
+        # 读取内存
+        md.ReadProcessMemory(int(p), ctypes.c_void_p(address), ctypes.byref(data), byte, None)
+        # 新值
+        newData = ctypes.c_size_t(change)
+        # 修改
+        md.WriteProcessMemory(int(p), ctypes.c_void_p(address), ctypes.byref(newData), byte, None)
+        win32api.CloseHandle(p)

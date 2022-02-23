@@ -33,11 +33,7 @@ class PyGameHelper:
         pygame.init()
 
         window = win32gui.FindWindow(None, "植物大战僵尸中文版")
-        if not window:
-            print("未获取到窗口")
         self.windows_area = win32gui.GetWindowRect(window)
-        if self.windows_area[0] < 0:
-            print("请打开相应的窗口")
         print(self.windows_area)
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (self.windows_area[0],
                                                         self.windows_area[1])
