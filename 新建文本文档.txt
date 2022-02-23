@@ -1,0 +1,71 @@
+3060ti 4300
+3070ti 5800
+
+ps5 3370
+switch 1619
+xbox x 3899
+
+
+僵尸call
+pushad
+pushfd
+mov ecx,6a9f38
+mov ecx,[ecx]
+add ecx,768
+mov ecx,[ecx]
+add ecx,160
+mov ecx,[ecx]
+mov eax,2
+push 8 
+push 0
+mov esi,0042A0F0
+call esi
+popfd
+popad
+ret
+
+shellcode = b"\xb9\x38\x9f\x6a\x00\x8b\x09\x81\xc1\x68\x07\x00\x00\x8b\x09\x81\xc1\x60\x01\x00\x00\x8b\x09\xb8\x02\x00\x00\x00\x6a\x08\x6a\x00\xbf\xf0\xa0\x42\x00\xff\xd7\xc3"
+
+mov eax,2 ;行数 （从0开始）y
+push 8 ;列数（从0开始） x
+push 0 ;僵尸类型 0为普通僵尸 按图册次序来 僵王博士后面的是红眼
+call 0042A0F0
+
+
+pushad
+pushfd
+mov ecx,6a9f38
+mov ecx,[ecx]
+add ecx,768
+mov ecx,[ecx]
+push -1
+push 0
+mov eax,1
+push 2
+push ecx
+mov esi,0040d120
+call esi
+popfd
+popad
+
+push 0 //ID
+mov eax,1  //Y
+push 0 //X
+
+shellcode = b"b9 38 9f 6a 00 8b 09 81 c1 68 07 00 00 8b 09 6a ff 6a 02 b8 01 00 00 00 6a 02 51 be 20 d1 40 00 ff d6 c3"
+
+阳光
+pushad
+pushfd
+push 2
+push 4
+push 50
+push 400 
+mov ecx,6a9f38
+mov ecx,[ecx]
+add ecx,768
+mov ecx,[ecx]
+mov esi,40cb10
+call esi
+popfd
+popad
