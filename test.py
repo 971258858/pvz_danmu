@@ -9,12 +9,14 @@ import random
 import requests
 import time
 from zhuru import ZombieCall
+import re
+import sys
 
 class Danmu():
     def __init__(self):
         # 可召唤僵尸类型列表
-        self.zombie_type_list = [0, 1, 2, 4, 5, 6]
-        self.zombie_sum_list = {"0": 100, "1": 100, "2": 200, "4": 400, "5": 600, "6": 800}
+        self.zombie_type_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19, 20, 21, 24, 25]
+        self.zombie_sum_list = {"0": 100, "1": 100, "2": 150, "3": 150, "4": 200, "5": 150, "6": 200, "7": 200, "8": 250, "9": 100, "10": 100, "11": 150, "12": 300, "13": 150, "14": 150, "15": 150, "16": 150, "17": 250, "18": 200, "19": 0, "20": 150, "21": 150, "22": 300, "23": 400, "24": 50, "25": 5000}
         # 弹幕url
         self.url = 'https://api.live.bilibili.com/xlive/web-room/v1/dM/gethistory'
         # 请求头
@@ -24,7 +26,7 @@ class Danmu():
         }
         # 定义POST传递的参数
         self.data = {
-            'roomid': '3502000',
+            'roomid': sys.argv[1],
             'csrf_token': '',
             'csrf': '',
             'visit_id': '',
@@ -37,7 +39,7 @@ class Danmu():
         log_file_read = open('danmu.log', mode='r', encoding='utf-8')
         self.log = log_file_read.readlines()
         self.integral = self.integral_file.readlines()
-        print(self.integral)
+        # print(self.integral)
     def get_danmu(self, isInit = 0):
         # 获取直播间弹幕
         html = requests.post(url=self.url, headers=self.headers, data=self.data).json()
@@ -54,7 +56,7 @@ class Danmu():
             # 判断对应消息是否存在于日志，如果和最后一条相同则打印并保存
             if msg + '\n' not in self.log:
                 # 打印消息
-                print(msg)
+                # print(msg)
                 # 保存日志
                 self.log_file_write.write(msg + '\n')
                 # 添加到日志列表
@@ -74,21 +76,62 @@ class Danmu():
                         i += 1
                     self.integral.append(nickname + ':1000')
                     self.integral_file.write(self.list_to_str(self.integral))
+
                 # 召唤僵尸
-                if len(text.split("召唤僵尸")) > 1:
-                    if int(text.split("召唤僵尸")[1][0]) in self.zombie_type_list:
+                # 蜘蛛僵尸
+                if len(text.split("召唤僵尸20")) > 1:
+                    call_type = re.findall(r"\d+\b", text.split("召唤僵尸20")[1])
+                    if len(call_type) > 1:
                         i = 0
                         for item in self.integral:
                             if nickname == item.split(":")[0]:
-                                if int(item.split(":")[1]) < self.zombie_sum_list[text.split("召唤僵尸")[1][0]]:
-                                    print("阳光不足")
+                                if int(item.split(":")[1]) < self.zombie_sum_list["20"]:
+                                    print(item.split(":")[0], "脑光不足")
                                     return
-                                self.integral[i] = item.split(":")[0] + ":" + str(int(item.split(":")[1]) - self.zombie_sum_list[text.split("召唤僵尸")[1][0]])
+                                now_integral = str(int(item.split(":")[1]) - self.zombie_sum_list["20"])
+                                self.integral[i] = item.split(":")[0] + ":" + now_integral
                                 self.integral_file.seek(0)
                                 self.integral_file.write(self.list_to_str(self.integral))
-                                ZombieCall(random.randint(0, 4), 10, int(text.split("召唤僵尸")[1][0]))
+                                ZombieCall(int(call_type[0]), int(call_type[1]), 20)
+                                print(item.split(":")[0], "蜘蛛召唤成功，剩余脑光：", now_integral)
                                 return
                             i += 1
+                # 随机行出现
+                if len(text.split("召唤僵尸")) > 1:
+                    call_type = re.findall(r"\d+\b", text.split("召唤僵尸")[1])
+                    if len(call_type) == 1:
+                        if int(call_type[0]) in self.zombie_type_list:
+                            i = 0
+                            for item in self.integral:
+                                if nickname == item.split(":")[0]:
+                                    if int(item.split(":")[1]) < self.zombie_sum_list[text.split("召唤僵尸")[1][0]]:
+                                        print(item.split(":")[0], "脑光不足")
+                                        return
+                                    now_integral = str(int(item.split(":")[1]) - self.zombie_sum_list[call_type[0]])
+                                    self.integral[i] = item.split(":")[0] + ":" + now_integral
+                                    self.integral_file.seek(0)
+                                    self.integral_file.write(self.list_to_str(self.integral))
+                                    ZombieCall(random.randint(0, 4), 10, int(call_type[0]))
+                                    print(item.split(":")[0], "随机召唤成功，剩余脑光：", now_integral)
+                                    return
+                                i += 1
+                    # 指定行出现
+                    if len(call_type) == 2:
+                        if int(call_type[0]) in self.zombie_type_list and int(call_type[1]) in range(5):
+                            i = 0
+                            for item in self.integral:
+                                if nickname == item.split(":")[0]:
+                                    if int(item.split(":")[1]) < self.zombie_sum_list[text.split("召唤僵尸")[1][0]]:
+                                        print(item.split(":")[0], "脑光不足")
+                                        return
+                                    now_integral = str(int(item.split(":")[1]) - self.zombie_sum_list[call_type[0]])
+                                    self.integral[i] = item.split(":")[0] + ":" + now_integral
+                                    self.integral_file.seek(0)
+                                    self.integral_file.write(self.list_to_str(self.integral))
+                                    ZombieCall(int(call_type[1]), 10, int(call_type[0]))
+                                    print(item.split(":")[0], "指定召唤成功，剩余脑光：", now_integral)
+                                    return
+                                i += 1
             # 清空变量缓存
             nickname = ''
             text = ''
@@ -98,17 +141,19 @@ class Danmu():
     def list_to_str(self, list):
         mystr=""
         for item in list:
-            mystr += '\n'+ item
+            if item != "\n":
+                mystr += '\n' + item
         return mystr
 
 if __name__ == '__main__':
     # 创建bDanmu实例
     bDanmu = Danmu()
-    # bDanmu.get_danmu(1)
-    # time.sleep(10)
-    # print("开始监听！")
+    # 初始化弹幕数据
+    bDanmu.get_danmu(1)
+    time.sleep(3)
+    print("开始监听！")
     while True:
-        # 暂停0.5防止cpu占用过高
+        # 暂停1s防止cpu占用过高
         time.sleep(1)
         # 获取弹幕
         bDanmu.get_danmu()

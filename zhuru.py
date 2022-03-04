@@ -8,13 +8,11 @@ import time
 PAGE_EXECUTE_READWRITE = 0x00000040
 PROCESS_ALL_ACCESS = (0x000F0000 | 0x00100000 | 0xFFF)
 VIRTUAL_MEM = (0x1000 | 0x2000)
-
 kernel32 = windll.kernel32
 pName = 'plantsvszombies.exe'
 shellcode = b"\x60\x9c\xb9\x38\x9f\x6a\x00\x8b\x09\x81\xc1\x68\x07\x00\x00\x8b\x09\x81\xc1\x60\x01\x00\x00\x8b\x09\xb8\x02\x00\x00\x00\x6a\x08\x6a\x00\xbe\xf0\xa0\x42\x00\xff\xd6\x6a\x02\x6a\x04\x6a\x50\x68\x00\x04\x00\x00\xb9\x38\x9f\x6a\x00\x8b\x09\x81\xc1\x68\x07\x00\x00\x8b\x09\xbe\x10\xcb\x40\x00\xff\xd6\x9d\x61\xc3"
 # 生成僵尸和阳光
 code_size = len(shellcode)  # 默认数据
-
 TH32CS_SNAPPROCESS = 0x00000002
 
 class PROCESSENTRY32(ctypes.Structure):
@@ -32,37 +30,25 @@ class PROCESSENTRY32(ctypes.Structure):
 class ZombieCall:
     def __init__(self, x, y, mytype):
         # 类型不能为3、7、8、9、11、12、13、14、15、17
-        self.created_zombie(x, y, mytype)
+        self.created_shellcode(x, y, mytype)
         procPid = int(self.getProcName(pName))
-        print("pid", procPid)
-
-        # Get a handle to the process we are injecting into.
-
         h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, procPid)
-        print("句柄", h_process)
         if not h_process:
-            print
-            "[*] Couldn't acquire a handle to PID"
+            print("初始化失败")
             sys.exit(0)
-
-        # Allocate some space for the shellcode
-
+        # print("初始化成功")
         arg_address = kernel32.VirtualAllocEx(h_process, 0, code_size, VIRTUAL_MEM, PAGE_EXECUTE_READWRITE)
-        # Write out the shellcode
         written = c_int(0)
-
-        print("修改内存", kernel32.WriteProcessMemory(h_process, arg_address, shellcode, code_size, byref(written)))
-        # Now we create the remote thread and point it's entry routine
-
-        # to be head of our shellcode
+        temp = kernel32.WriteProcessMemory(h_process, arg_address, shellcode, code_size, byref(written))
+        # print("修改内存", "成功" if temp == 1 else ("失败"+temp))
         thread_id = c_ulong(0)
-        print("arg_address", hex(arg_address), h_process)
+        # print("arg_address", hex(arg_address), h_process)
         hThread = kernel32.CreateRemoteThread(h_process, None, code_size, arg_address, None, 0, byref(thread_id))
         win32api.CloseHandle(hThread)
         # print(kernel32.VirtualFreeEx(h_process, arg_address, 0, 0x4000))
         win32api.CloseHandle(h_process)
 
-    def created_zombie(self, x, y, mytype):
+    def created_shellcode(self, x, y, mytype):
         zombie_x = self.int_to_hex(x)
         zombie_y = self.int_to_hex(y)
         zombie_type = self.int_to_hex(mytype)
@@ -82,7 +68,7 @@ class ZombieCall:
         for proc in psutil.process_iter():
             try:
                 if proc.name().lower() == pname:
-                    return str(proc).split('=')[1].split(',')[0]  # return if found one
+                    return str(proc).split('=')[1].split(',')[0]
             except psutil.AccessDenied:
                 pass
             except psutil.NoSuchProcess:
