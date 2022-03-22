@@ -19,11 +19,13 @@ integral.txt存储积分和用户信息。
 
 单独弹幕互动模式：python test.py（修改文件头部参数roomid为你要监听的直播间号） 
 
-带ESP的互动模式：python main_bili.py（修改文件头部参数roomid为你要监听的直播间号） 
+单独ESP的作弊模式：python main_esp.py
+
+带ESP的互动模式：python main_bili_esp.py（修改文件头部参数roomid为你要监听的直播间号） 
 
 
 四、目前维护版本：
 
 test.py可能有些bug没有修复，需要自己调试下。
 
-main_bili.py是目前在维护的文件，目前还有部分小bug有待修复。
+main_bili_esp.py是目前在维护的文件，目前还有部分小bug有待修复。
