@@ -25,7 +25,7 @@ roomid = "3502000"
 class Danmu():
     def __init__(self):
         # 可召唤僵尸类型列表
-        self.zombie_type_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19, 20, 21, 24, 25]
+        self.zombie_type_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24]
         self.zombie_sum_list = {"0": 100, "1": 100, "2": 150, "3": 150, "4": 200, "5": 150, "6": 200, "7": 200, "8": 250, "9": 100, "10": 100, "11": 150, "12": 300, "13": 150, "14": 150, "15": 150, "16": 150, "17": 250, "18": 200, "19": 0, "20": 150, "21": 150, "22": 300, "23": 400, "24": 50, "25": 5000}
         # 弹幕url
         self.url = 'https://api.live.bilibili.com/xlive/web-room/v1/dM/gethistory'
@@ -47,10 +47,10 @@ class Danmu():
 
         # 日志写对象
         self.log_file_write = open('danmu.log', mode='a+', encoding='utf-8')
-        self.integral_file = open('integral.txt', mode='r+', encoding='utf-8')
+        self.integral_file = open('integral_imrb.txt', mode='r+', encoding='utf-8')
         self.log = open('danmu.log', mode='r', encoding='utf-8').readlines()
         self.integral = self.integral_file.readlines()
-        # print(self.integral)
+
 
     def get_danmu(self, isInit = 0):
         # 获取直播间弹幕
@@ -59,17 +59,16 @@ class Danmu():
             'https': '118.244.239.2:3228'
         }
         ua = UserAgent().random
-        print(ua)
+        # print(ua)
         self.headers = {
             'Host': 'api.live.bilibili.com',
             'Origin': 'bilibili.com',
-            'User-Agent': ua,
+            'User-Agent': ua
         }
-
         try:
             html = requests.post(url=self.url, headers=self.headers, data=self.data, timeout=6).json()
         except:
-            print("请求超时")
+            print("请求超时,请稍等几秒")
             return
         # print(html)
         # 解析弹幕列表
@@ -93,6 +92,8 @@ class Danmu():
                 # 初始化数据
                 if isInit == 1:
                     continue
+                # 初始化阳光
+                now_mysun = smr.get_mysun()
                 # 加入增加阳光
                 if text == '加入':
                     i = 0
@@ -101,34 +102,26 @@ class Danmu():
                             return
                         i += 1
                     self.integral.append(nickname.strip())
-                    self.integral[0] = str(int(self.integral[0]) + 1000)
+                    ZombieCall(random.randint(0, 4), 10, 1)
                     self.integral_file.seek(0)
                     self.integral_file.write(self.list_to_str(self.integral))
                     self.integral_file.close()
-                    self.integral_file = open('integral.txt', mode='r+', encoding='utf-8')
-                    print(nickname, "加入成功！")
+                    self.integral_file = open('integral_imrb.txt', mode='r+', encoding='utf-8')
+                    print(nickname, "加入成功！自动召唤一个小旗子僵尸~互动看顶部例子")
                 # 礼物
                 if len(text.split("个辣条")) > 1:
                     if nickname.strip() == "丑皇今天不加班":
                         gifts_num = re.findall(r"\d+", text)
                         temp = 25*int(gifts_num[len(gifts_num) - 1])
-                        self.integral[0] = str(int(self.integral[0]) + temp)
-                        self.integral_file.seek(0)
-                        self.integral_file.write(self.list_to_str(self.integral))
-                        self.integral_file.close()
-                        self.integral_file = open('integral.txt', mode='r+', encoding='utf-8')
-                        print("感谢", nickname, "增加了", temp, "个脑光")
+                        smr.set_mysun(int(now_mysun) + temp)
+                        print("感谢辣条", nickname, "增加了", temp, "个阳光")
                     return
                 if len(text.split("谢谢")) > 1:
                     if nickname.strip() == "丑皇今天不加班":
                         gifts_num = re.findall(r"\d+", text)
                         temp = 100*int(gifts_num[len(gifts_num) - 1])
-                        self.integral[0] = str(int(self.integral[0]) + temp)
-                        self.integral_file.seek(0)
-                        self.integral_file.write(self.list_to_str(self.integral))
-                        self.integral_file.close()
-                        self.integral_file = open('integral.txt', mode='r+', encoding='utf-8')
-                        print("感谢", nickname, "增加了", temp, "个脑光")
+                        smr.set_mysun(int(now_mysun) + temp)
+                        print("感谢礼物", nickname, "增加了", temp, "个阳光")
                     return
                 # 召唤僵尸
                 # 蜘蛛僵尸
@@ -138,15 +131,13 @@ class Danmu():
                         i = 0
                         for item in self.integral:
                             if (nickname.strip() == item) or (nickname.strip() + "\n" == item):
-                                if int(self.integral[0]) < self.zombie_sum_list["20"]:
-                                    print(item.split(":")[0], "脑光不足")
+                                if int(now_mysun) < self.zombie_sum_list["20"]:
+                                    print(nickname, "阳光不足，可以赠送辣条增加阳光")
                                     return
-                                now_integral = str(int(self.integral[0]) - self.zombie_sum_list["20"])
-                                self.integral[0] = now_integral
-                                self.integral_file.seek(0)
-                                self.integral_file.write(self.list_to_str(self.integral))
+                                now_integral = str(int(now_mysun) - self.zombie_sum_list["20"])
                                 ZombieCall(int(call_type[0]), int(call_type[1]), 20)
-                                print(nickname, " 蜘蛛召唤成功，剩余脑光：", now_integral)
+                                smr.set_mysun(int(now_integral) + 25)
+                                print(nickname, " 蜘蛛召唤成功，剩余阳光：", str(int(now_integral) + 25))
                                 return
                             i += 1
                 # 随机行出现
@@ -156,31 +147,28 @@ class Danmu():
                         if int(call_type[0]) in self.zombie_type_list:
                             for item in self.integral:
                                 if (nickname.strip() == item) or (nickname.strip() + "\n" == item):
-                                    if int(self.integral[0]) < self.zombie_sum_list[str(int(call_type[0]))]:
-                                        print(item, "脑光不足")
+                                    if int(now_mysun) < self.zombie_sum_list[str(int(call_type[0]))]:
+                                        print(nickname, "阳光不足，可以赠送辣条增加阳光")
                                         return
-                                    now_integral = str(int(self.integral[0]) - self.zombie_sum_list[str(int(call_type[0]))])
-                                    self.integral[0] = now_integral
-                                    self.integral_file.seek(0)
-                                    self.integral_file.write(self.list_to_str(self.integral))
-                                    ZombieCall(random.randint(0, 4), 10, int(call_type[0]))
-                                    print(nickname, "随机召唤成功，剩余脑光：", now_integral)
+                                    now_integral = str(int(now_mysun) - self.zombie_sum_list[str(int(call_type[0]))])
+                                    ZombieCall(random.randint(0, 4), 5, int(call_type[0]))
+                                    smr.set_mysun(int(now_integral) + 25)
+                                    print(nickname, "随机召唤成功，剩余阳光：", str(int(now_integral) + 25))
                                     return
                     # # 指定行出现
                     if len(call_type) == 2:
                         if int(call_type[0]) in self.zombie_type_list and int(call_type[1]) in range(5):
                             for item in self.integral:
-
                                 if (nickname.strip() == item) or (nickname.strip() + "\n" == item):
-                                    if int(self.integral[0]) < self.zombie_sum_list[str(int(call_type[0]))]:
-                                        print(item, "脑光不足")
+                                    print(str(int(call_type[0])))
+                                    if int(now_mysun) < self.zombie_sum_list[str(int(call_type[0]))]:
+                                        print(nickname, "阳光不足，可以赠送辣条增加阳光")
                                         return
-                                    now_integral = str(int(self.integral[0]) - self.zombie_sum_list[str(int(call_type[0]))])
-                                    self.integral[0] = now_integral
-                                    self.integral_file.seek(0)
-                                    self.integral_file.write(self.list_to_str(self.integral))
-                                    ZombieCall(int(call_type[1]), 10, int(call_type[0]))
-                                    print(nickname, "指定召唤成功，剩余脑光：", now_integral)
+                                    now_integral = str(int(now_mysun) - self.zombie_sum_list[str(int(call_type[0]))])
+
+                                    ZombieCall(int(call_type[1]), 5, int(call_type[0]))
+                                    smr.set_mysun(int(now_integral) + 25)
+                                    print(nickname, "指定召唤成功，剩余阳光：", str(int(now_integral) + 25))
                                     return
 
             # 清空变量缓存
@@ -194,6 +182,7 @@ class Danmu():
     def list_to_str(self, list):
         mystr=""
         for item in list:
+            item = str(item)
             if item != "\n":
                 mystr += item + '\n'
         return mystr

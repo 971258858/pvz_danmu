@@ -1,3 +1,7 @@
 psutil
 pygame
 pywin32
+ctypes
+struct
+psutil
+requests
