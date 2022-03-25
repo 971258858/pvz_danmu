@@ -23,6 +23,7 @@ integral.txt存储积分和用户信息。
 
 带ESP的互动模式：python main_bili_esp.py（修改文件头部参数roomid为你要监听的直播间号） 
 
+"我是僵尸"模式的互动模式：python main_imrb.py（修改文件头部参数roomid为你要监听的直播间号） 
 
 四、目前维护版本：
 
