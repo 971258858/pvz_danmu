@@ -13,16 +13,9 @@ PROCESS_QUERY_INFORMATION = 0x0400
 PROCESS_VM_READ = 0x0010
 
 
-# ModuleEntry32, CreateToolhelp32Snapshot, and Module32First are ctypes which
-# helps us identify the base address for the game in memory. We then use
-# that base address to build off of
-# ModuleEntry32、CreateToolhelp32Snapshot和Module32First是
+
 # 帮助我们识别内存中游戏的基址。然后我们使用这个基址来构建
 class MODULEENTRY32(ctypes.Structure):
-    """
-    Windows C-type ModuleEntry32 object used to interact with our game process
-    Windows C-type ModuleEntry32对象，用于与我们的游戏过程交互
-    """
     _fields_ = [('dwSize', ctypes.c_ulong),
                 ('th32ModuleID', ctypes.c_ulong),
                 ('th32ProcessID', ctypes.c_ulong),
@@ -48,7 +41,6 @@ CloseHandle = ctypes.windll.kernel32.CloseHandle
 CloseHandle.argtypes = [ctypes.c_void_p]
 CloseHandle.rettype = ctypes.c_int
 
-# ReadProcessMemory is also a cytpe, but will perform the actual memory reading
 ReadProcessMemory = ctypes.WinDLL('kernel32', use_last_error=True).ReadProcessMemory
 ReadProcessMemory.argtypes = [ctypes.wintypes.HANDLE, ctypes.wintypes.LPCVOID,
                               ctypes.wintypes.LPVOID, ctypes.c_size_t,
@@ -57,26 +49,7 @@ ReadProcessMemory.restype = ctypes.wintypes.BOOL
 
 
 class ReadMemory:
-    """
-    Class responsible for aiding is memory reading
-    类型负责帮助记忆阅读
-    """
     def __init__(self, exe_name: str):
-        """
-        Gets the process ID for the executable, then a handle for that process,
-        then we get the base memory address for our process using the handle.
-
-        With the base memory address known, we can then perform our standard
-        memory calls (read_int, etc) to get data from memory.
-
-        :param exe_name: The executable name of the program we want to read
-        memory from
-        获取可执行文件的进程ID，然后获取该进程的句柄，
-        然后使用句柄获取进程的基本内存地址。
-        已知基内存地址后，我们就可以执行标准了
-        内存调用(read_int等)从内存中获取数据。
-        :param exe_name:要从其中读取内存的程序的可执行名称
-        """
         self.exe = exe_name
         self.pid = self._get_process_id().pid
         self.patch = self._get_process_id().cwd()
@@ -85,10 +58,6 @@ class ReadMemory:
         # 游戏基址
 
     def _get_process_id(self):
-        """
-        Determines the process ID for the given executable name
-        确定给定可执行名称的进程ID
-        """
         # 正在运行的进程列表psutil.process_iter()
         for proc in psutil.process_iter():
             if self.exe in proc.name():
@@ -96,14 +65,6 @@ class ReadMemory:
         raise Exception(f"Cannot find executable with name: {self.exe}")
 
     def _get_process_handle(self):
-        """
-        Attempts to open a handle (using read and query permissions only) for
-        the class process ID
-        :return: an open process handle for our process ID (which matches the
-        executable), used to make memory calls
-        尝试打开类进程ID的句柄(仅使用读取和查询权限)
-        :return:进程ID打开的进程句柄(它匹配可执行文件)，用于进行内存调用
-        """
         try:
             # 打开现有的本地进程对象
             return ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_INFORMATION
@@ -114,18 +75,6 @@ class ReadMemory:
                             f"Error: {str(e)}")
 
     def _get_base_address(self):
-        """
-        Using the global ctype constructors, determine the base address
-        of the process ID we are working with. In something like cheat engine,
-        this is the equivilent of the "SoTGame.exe" portions in
-        "SoTGame.exe"+0x15298A
-        :return: the base memory address for the process
-        使用所有ctype构造函数，确定基址
-        我们正在处理的进程ID的。就像作弊引擎一样，
-        这与中的“SoTGame.exe”部分相同
-        “SoTGame.exe”+0x15298A
-        ：返回：进程的基内存地址
-        """
         h_module_snap = ctypes.c_void_p(0)
         me_32 = MODULEENTRY32()
 
@@ -145,11 +94,6 @@ class ReadMemory:
         return me_32.modBaseAddr
 
     def read_bytes(self, address: int, byte: int) -> bytes:
-        """
-        Read a number of bytes at a specific address
-        :param address: address at which to read a number of bytes
-        :param byte: count of bytes to read
-        """
         if not isinstance(address, int):
             raise TypeError('Address must be int: {}'.format(address))
         buff = ctypes.create_string_buffer(byte)
@@ -165,76 +109,40 @@ class ReadMemory:
         return raw
 
     def read_int(self, address: int):
-        """
-        :param address: address at which to read a number of bytes
-        """
         read_bytes = self.read_bytes(address, struct.calcsize('i'))
         read_bytes = struct.unpack('<i', read_bytes)[0]
         return read_bytes
 
     def read_float(self, address: int) -> float:
-        """
-        Read the float (4 bytes) at a given address and return that data
-        :param address: address at which to read a number of bytes
-        """
         read_bytes = self.read_bytes(address, struct.calcsize('f'))
         read_bytes = struct.unpack('<f', read_bytes)[0]
         return read_bytes
 
     def read_ulong(self, address: int):
-        """
-        Read the uLong (4 bytes) at a given address and return that data
-        :param address: address at which to read a number of bytes
-        :return: the 4-bytes of data (ulong) that live at the provided
-        address
-        """
         # 4 bytes address
         read_bytes = self.read_bytes(address, struct.calcsize('L'))
         read_bytes = struct.unpack('<L', read_bytes)[0]
         return read_bytes
 
     def read_ptr(self, address: int) -> int:
-        """
-        Read the uLongLong (8 bytes) at a given address and return that data
-        :param address: address at which to read a number of bytes
-        :return: the 8-bytes of data (ulonglong) that live at the provided
-        address
-        """
         # 8 bytes address
         read_bytes = self.read_bytes(address, struct.calcsize('Q'))
         read_bytes = struct.unpack('<Q', read_bytes)[0]
         return read_bytes
 
     def read_string(self, address: int, byte: int = 50) -> int:
-        """
-        Read a number of bytes and convert that to a string up until the first
-        occurance of no data. Useful in getting raw names
-        :param address: address at which to read a number of bytes
-        :param byte: count of bytes to read, optional as we assume a 50
-        byte name
-        """
         buff = self.read_bytes(address, byte)
         # print(type(buff))
         i = buff.find(b'\x00')
         return str("".join(map(chr, buff[:i])))
 
     def read_name_string(self, address: int, byte: int = 32) -> int:
-        """
-        Used to convert bytes that represent a players name to a string. Player
-        names always are seperated by at least 3 null characters
-        :param address: address at which to read a number of bytes
-        :param byte: count of bytes to read, optional as we assume a 32
-        byte name
-        """
         buff = self.read_bytes(address, byte)
         i = buff.find(b"\x00\x00\x00")
         joined = str("".join(map(chr, buff[:i])))
         return ''.join(char for char in joined if char in printable)
 
     def set_int(self, address: int, num: int):
-        """
-        :修改整数型数值
-        """
         PROCESS_ALL_ACCESS = (0x000F0000 | 0x00100000 | 0xFFF)
         # 找窗体
 
@@ -252,9 +160,6 @@ class ReadMemory:
         win32api.CloseHandle(p)
 
     def set_bytes(self, address: int, byte: int, change: int) -> bytes:
-        """
-        :修改十六进制型数值
-        """
         PROCESS_ALL_ACCESS = (0x000F0000 | 0x00100000 | 0xFFF)
         # 找窗体
 
