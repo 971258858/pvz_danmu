@@ -1,9 +1,9 @@
-# pvz_eap_hack
-版本：
-python版本3.7.9 未连接数据库版本
+# pvz_danmu
+新版本：
+python版本3.8.3
 
 使用方法：
-弹幕互动模式：python test.py 你的直播间号
-ESP特权模式：python main.py
+弹幕互动模式：python main.py  （按需引用依赖即可）
 
-这是最初版本的版本框架，已经不维护了
+更新说明：
+使用了danmuku的读取弹幕方式；对游戏操作的py文件进行了封装，代码结构更清晰。
