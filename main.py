@@ -1,10 +1,9 @@
 
 import asyncio
 import time
-
+from util.pvz_hack import PVZMemoryReader
 import danmaku
 from danmu_analyse import Analyse
-from util.pvz_hack import PVZMemoryReader
 # 直播间信息
 up_name = "丑皇今天不加班"
 up_roomid = "3502000"
@@ -17,11 +16,13 @@ zombie_sum_list = {"0": 100, "1": 100, "2": 150, "3": 150, "4": 200, "5": 150, "
                    "24": 50, "25": 5000}
 async def printer(q):
     mr = PVZMemoryReader()
+    mr.auto_pickup()  # 开启自动拾取
     while True:
         m = await q.get()
+        # 部分文字被过滤掉了，猜测是danmuku过滤掉了，需要排查
         if m['msg_type'] == 'danmaku':
-            print(f'{m["name"]}：{m["content"]}')
-            Analyse(up_name, m["name"], m["content"], mr, zombie_type_list, zombie_sum_list)
+            # print(f'{m["name"]}：{m["content"]}')
+            Analyse(up_name, m["name"], m["content"], zombie_type_list, zombie_sum_list)
 async def main(url):
     q = asyncio.Queue()
     dmc = danmaku.DanmakuClient(url, q)

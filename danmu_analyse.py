@@ -1,6 +1,7 @@
 import re
 import random
 from util.shellcode_helper import ZombieCall
+from util.pvz_hack import PVZMemoryReader
 # 初始化玩家列表
 player_list = []
 class Analyse:
@@ -13,10 +14,10 @@ class Analyse:
     :param zombie_type_list: 可以召唤的怪物列表
     :param zombie_sum_list: 怪物消耗阳光的数据表
     """
-    def __init__(self, up_name, name, data, mr, zombie_type_list, zombie_sum_list):
-        self.mr = mr
+    def __init__(self, up_name, name, data, zombie_type_list, zombie_sum_list):
+        # 初始化工具类
+        self.mr = PVZMemoryReader()
         # 初始化阳光
-        self.mr.read_ZombieList()
         self.now_mysun = int(self.mr.get_mysun())
         # 初始化僵尸数据
         self.zombie_type_list = zombie_type_list
@@ -39,7 +40,7 @@ class Analyse:
                 gifts_num = int(number_list[len(number_list) - 1])
                 temp = 25 * gifts_num
                 name = self.data[2:self.data.index('的')]
-                self.gift_feedback(name)
+                self.gift_feedback(name, temp)
         # 召唤僵尸
         if self.player_judge() == 1:
             if self.data[0:2] == '召唤' and len(number_list) > 0:
@@ -91,8 +92,12 @@ class Analyse:
             return
         if int(y) in range(5):
             if int(z_type) in self.zombie_type_list:
+                nowsun = self.now_mysun - int(self.zombie_sum_list[z_type])
+                if nowsun < 50:
+                    ZombieCall(random.randint(0, 4), 9, 1)
+                    print("阳光快没了~", nowsun)
                 ZombieCall(y, x, z_type)
-                self.mr.set_mysun(self.now_mysun - int(self.zombie_sum_list[z_type]))
+                self.mr.set_mysun(nowsun)
                 print(self.name, "召唤成功~花费了", self.zombie_sum_list[z_type])
             else:
                 print(self.name, "编号", z_type, "的僵尸目前关卡不可召唤")
