@@ -21,15 +21,6 @@ class PVZMemoryReader:
     def read_ZombieList(self):
         self.run_info = []
         for index in range(self.zombie_num):
-            # 本局阳光
-            self.sun = self.rm.read_int(self.offset2 + 21856)
-            # print("阳光数：", self.sun)
-
-            # 本局僵尸总数
-            self.zombie_num = self.rm.read_int(self.offset2 + 148)
-            self.zombie_now_num = self.rm.read_int(self.offset2 + 160)
-            # print("本局僵尸总数：", self.zombie_num)
-
             # 僵尸实体，后面的+348是下一个僵尸
             zombie_entity = self.rm.read_ulong(self.offset2 + 144) + 348 * index
             # print("zombie_entity", zombie_entity)
